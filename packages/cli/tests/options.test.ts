@@ -5,6 +5,7 @@ import {
   __testClearFrameworks,
   __testRegisterFramework,
 } from '@tanstack/create'
+import * as create from '@tanstack/create'
 
 import * as prompts from '../src/ui-prompts'
 import * as commandLine from '../src/command-line'
@@ -68,9 +69,24 @@ function setBasicSpies() {
     .spyOn(commandLine, 'resolveStarterSpecifier')
     .mockImplementation(async (value) =>
       value === 'blog'
-        ? '/Users/tannerlinsley/GitHub/cli/examples/react/blog/starter.json'
+        ? 'https://example.com/react/blog/starter.json'
         : value,
     )
+  vi.spyOn(create, 'loadStarter').mockImplementation(
+    async (id) =>
+      ({
+        id: String(id),
+        name: 'Blog',
+        description: 'Blog template',
+        type: 'starter',
+        framework: 'react',
+        mode: 'file-router',
+        typescript: true,
+        dependsOn: [],
+        files: {},
+        deletedFiles: [],
+      }) as any,
+  )
   vi.spyOn(prompts, 'getProjectName').mockImplementation(async () => 'hello')
   vi.spyOn(prompts, 'selectTemplate').mockImplementation(async () => undefined)
   vi.spyOn(prompts, 'selectPackageManager').mockImplementation(
