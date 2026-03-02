@@ -13,9 +13,10 @@ npx @tanstack/cli create my-app
 
 - **Add-ons** - Auth, database, deployment, monitoring ([full list](./add-ons.md))
 - **Templates** - Reusable project templates ([docs](./templates.md))
-- **MCP Server** - AI agent support ([docs](./mcp/overview.md))
+- **CLI Introspection** - Discover add-ons, docs, libraries, and ecosystem data directly from CLI
 
 ## Next Steps
 
 - [Quick Start](./quick-start.md) - Create your first project
 - [CLI Reference](./cli-reference.md) - All commands and options
+- [MCP Migration](./mcp-migration.md) - Move MCP-based workflows to CLI commands

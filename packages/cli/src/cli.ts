@@ -18,8 +18,13 @@ import {
   initAddOn,
   initStarter,
 } from '@tanstack/create'
-
-import { runMCPServer } from './mcp.js'
+import {
+  LIBRARY_GROUPS,
+  fetchDocContent,
+  fetchLibraries,
+  fetchPartners,
+  searchTanStackDocs,
+} from './discovery.js'
 
 import { promptForAddOns, promptForCreateOptions } from './options.js'
 import {
@@ -206,6 +211,35 @@ export function cli({
 
   // Mode is always file-router (TanStack Start)
   const defaultMode = 'file-router'
+  const categoryAliases: Record<string, string> = {
+    db: 'database',
+    postgres: 'database',
+    sql: 'database',
+    login: 'auth',
+    authentication: 'auth',
+    hosting: 'deployment',
+    deploy: 'deployment',
+    serverless: 'deployment',
+    errors: 'monitoring',
+    logging: 'monitoring',
+    content: 'cms',
+    'api-keys': 'api',
+    grid: 'data-grid',
+    review: 'code-review',
+    courses: 'learning',
+  }
+
+  function printJson(data: unknown) {
+    console.log(JSON.stringify(data, null, 2))
+  }
+
+  function parsePositiveInteger(value: string) {
+    const parsed = Number(value)
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      throw new InvalidArgumentError('Value must be a positive integer')
+    }
+    return parsed
+  }
 
   program
     .name(name)
@@ -229,8 +263,29 @@ export function cli({
         getFrameworkByName(options.framework || defaultFramework || 'React')!,
         defaultMode,
       )
+      const visibleAddOns = addOns.filter((a) => !forcedAddOns.includes(a.id))
+      if (options.json) {
+        printJson(
+          visibleAddOns.map((addOn) => ({
+            id: addOn.id,
+            name: addOn.name,
+            description: addOn.description,
+            type: addOn.type,
+            category: addOn.category,
+            phase: addOn.phase,
+            modes: addOn.modes,
+            link: addOn.link,
+            warning: addOn.warning,
+            exclusive: addOn.exclusive,
+            dependsOn: addOn.dependsOn,
+            options: addOn.options,
+          })),
+        )
+        return
+      }
+
       let hasConfigurableAddOns = false
-      for (const addOn of addOns.filter((a) => !forcedAddOns.includes(a.id))) {
+      for (const addOn of visibleAddOns) {
         const hasOptions =
           addOn.options && Object.keys(addOn.options).length > 0
         const optionMarker = hasOptions ? '*' : ' '
@@ -261,6 +316,34 @@ export function cli({
         process.exit(1)
       }
 
+      if (options.json) {
+        const files = await addOn.getFiles()
+        printJson({
+          id: addOn.id,
+          name: addOn.name,
+          description: addOn.description,
+          type: addOn.type,
+          category: addOn.category,
+          phase: addOn.phase,
+          modes: addOn.modes,
+          link: addOn.link,
+          warning: addOn.warning,
+          exclusive: addOn.exclusive,
+          dependsOn: addOn.dependsOn,
+          options: addOn.options,
+          routes: addOn.routes,
+          packageAdditions: addOn.packageAdditions,
+          shadcnComponents: addOn.shadcnComponents,
+          integrations: addOn.integrations,
+          readme: addOn.readme,
+          files,
+          author: addOn.author,
+          version: addOn.version,
+          license: addOn.license,
+        })
+        return
+      }
+
       console.log(
         `${chalk.bold.cyan('Add-on Details:')} ${chalk.bold(addOn.name)}`,
       )
@@ -283,7 +366,7 @@ export function cli({
       if (addOn.options && Object.keys(addOn.options).length > 0) {
         console.log(`\n${chalk.bold.yellow('Configuration Options:')}`)
         for (const [optionName, option] of Object.entries(addOn.options)) {
-          if (option && typeof option === 'object' && 'type' in option) {
+          if ('type' in option) {
             const opt = option as any
             console.log(`  ${chalk.bold(optionName)}:`)
             console.log(`    Label: ${opt.label}`)
@@ -525,6 +608,7 @@ export function cli({
         '--addon-details <addon-id>',
         'show detailed information about a specific add-on',
       )
+      .option('--json', 'output JSON for automation', false)
       .option('--git', 'create a git repository')
       .option('--no-git', 'do not create a git repository')
       .option(
@@ -581,17 +665,265 @@ export function cli({
     await startDevWatchMode(projectName, devOptions)
   })
 
-  // === MCP SUBCOMMAND ===
+  // === LIBRARIES SUBCOMMAND ===
   program
-    .command('mcp')
-    .description('Run the MCP (Model Context Protocol) server')
-    .option('--sse', 'Run in SSE mode instead of stdio', false)
-    .action(async (options: { sse: boolean }) => {
-      await runMCPServer(options.sse, {
-        forcedAddOns,
-        appName,
-      })
+    .command('libraries')
+    .description('List TanStack libraries')
+    .option(
+      '--group <group>',
+      `filter by group (${LIBRARY_GROUPS.join(', ')})`,
+    )
+    .option('--json', 'output JSON for automation', false)
+    .action(async (options: { group?: string; json: boolean }) => {
+      try {
+        const data = await fetchLibraries()
+        let libraries = data.libraries
+
+        if (
+          options.group &&
+          Object.prototype.hasOwnProperty.call(data.groups, options.group)
+        ) {
+          const groupIds = data.groups[options.group]
+          libraries = libraries.filter((lib) => groupIds.includes(lib.id))
+        }
+
+        const groupName = options.group
+          ? data.groupNames[options.group] || options.group
+          : 'All Libraries'
+
+        const payload = {
+          group: groupName,
+          count: libraries.length,
+          libraries: libraries.map((lib) => ({
+            id: lib.id,
+            name: lib.name,
+            tagline: lib.tagline,
+            description: lib.description,
+            frameworks: lib.frameworks,
+            latestVersion: lib.latestVersion,
+            docsUrl: lib.docsUrl,
+            githubUrl: lib.githubUrl,
+          })),
+        }
+
+        if (options.json) {
+          printJson(payload)
+          return
+        }
+
+        console.log(chalk.bold(groupName))
+        for (const lib of payload.libraries) {
+          console.log(
+            `${chalk.bold(lib.id)} (${lib.latestVersion}) - ${lib.tagline}`,
+          )
+        }
+      } catch (error) {
+        log.error(error instanceof Error ? error.message : String(error))
+        process.exit(1)
+      }
     })
+
+  // === DOC SUBCOMMAND ===
+  program
+    .command('doc')
+    .description('Fetch a TanStack documentation page')
+    .argument('<library>', 'library ID (eg. query, router, table)')
+    .argument('<path>', 'documentation path (eg. framework/react/overview)')
+    .option('--docs-version <version>', 'docs version (default: latest)', 'latest')
+    .option('--json', 'output JSON for automation', false)
+    .action(
+      async (
+        libraryId: string,
+        path: string,
+        options: { docsVersion: string; json: boolean },
+      ) => {
+        try {
+          const data = await fetchLibraries()
+          const library = data.libraries.find((l) => l.id === libraryId)
+
+          if (!library) {
+            throw new Error(
+              `Library "${libraryId}" not found. Use \`tanstack libraries\` to see available libraries.`,
+            )
+          }
+
+          if (
+            options.docsVersion !== 'latest' &&
+            !library.availableVersions.includes(options.docsVersion)
+          ) {
+            throw new Error(
+              `Version "${options.docsVersion}" not found for ${library.name}. Available: ${library.availableVersions.join(', ')}`,
+            )
+          }
+
+          const branch =
+            options.docsVersion === 'latest' ||
+            options.docsVersion === library.latestVersion
+              ? library.latestBranch || 'main'
+              : options.docsVersion
+
+          const docsRoot = library.docsRoot || 'docs'
+          const filePath = `${docsRoot}/${path}.md`
+          const content = await fetchDocContent(library.repo, branch, filePath)
+
+          if (!content) {
+            throw new Error(
+              `Document not found: ${library.name} / ${path} (version: ${options.docsVersion})`,
+            )
+          }
+
+          const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
+          let title = path.split('/').pop() || 'Untitled'
+          let docContent = content
+
+          if (frontmatterMatch && frontmatterMatch[1]) {
+            const frontmatter = frontmatterMatch[1]
+            const titleMatch = frontmatter.match(
+              /title:\s*['"]?([^'"\n]+)['"]?/,
+            )
+            if (titleMatch && titleMatch[1]) {
+              title = titleMatch[1]
+            }
+            docContent = content.slice(frontmatterMatch[0].length).trim()
+          }
+
+          const payload = {
+            title,
+            content: docContent,
+            url: `https://tanstack.com/${libraryId}/${options.docsVersion}/docs/${path}`,
+            library: library.name,
+            version:
+              options.docsVersion === 'latest'
+                ? library.latestVersion
+                : options.docsVersion,
+          }
+
+          if (options.json) {
+            printJson(payload)
+            return
+          }
+
+          console.log(chalk.bold(payload.title))
+          console.log(chalk.blue(payload.url))
+          console.log('')
+          console.log(payload.content)
+        } catch (error) {
+          log.error(error instanceof Error ? error.message : String(error))
+          process.exit(1)
+        }
+      },
+    )
+
+  // === SEARCH-DOCS SUBCOMMAND ===
+  program
+    .command('search-docs')
+    .description('Search TanStack documentation')
+    .argument('<query>', 'search query')
+    .option('--library <id>', 'filter to specific library')
+    .option('--framework <name>', 'filter to specific framework')
+    .option('--limit <n>', 'max results (default: 10, max: 50)', parsePositiveInteger, 10)
+    .option('--json', 'output JSON for automation', false)
+    .action(
+      async (
+        query: string,
+        options: {
+          library?: string
+          framework?: string
+          limit: number
+          json: boolean
+        },
+      ) => {
+        try {
+          const payload = await searchTanStackDocs({
+            query,
+            library: options.library,
+            framework: options.framework,
+            limit: options.limit,
+          })
+
+          if (options.json) {
+            printJson(payload)
+            return
+          }
+
+          for (const result of payload.results) {
+            console.log(
+              `${chalk.bold(result.title)} [${result.library}]\n${chalk.blue(result.url)}\n${result.snippet}\n`,
+            )
+          }
+        } catch (error) {
+          log.error(error instanceof Error ? error.message : String(error))
+          process.exit(1)
+        }
+      },
+    )
+
+  // === ECOSYSTEM SUBCOMMAND ===
+  program
+    .command('ecosystem')
+    .description('List TanStack ecosystem partners')
+    .option('--category <category>', 'filter by category')
+    .option('--library <id>', 'filter by TanStack library')
+    .option('--json', 'output JSON for automation', false)
+    .action(
+      async (options: { category?: string; library?: string; json: boolean }) => {
+        try {
+          const data = await fetchPartners()
+
+          let resolvedCategory: string | undefined
+          if (options.category) {
+            const normalized = options.category.toLowerCase().trim()
+            resolvedCategory = categoryAliases[normalized] || normalized
+            if (!data.categories.includes(resolvedCategory)) {
+              resolvedCategory = undefined
+            }
+          }
+
+          const library = options.library?.toLowerCase().trim()
+          const partners = data.partners
+            .filter((partner) =>
+              resolvedCategory ? partner.category === resolvedCategory : true,
+            )
+            .filter((partner) =>
+              library ? partner.libraries.some((l) => l === library) : true,
+            )
+            .map((partner) => ({
+              id: partner.id,
+              name: partner.name,
+              tagline: partner.tagline,
+              description: partner.description,
+              category: partner.category,
+              categoryLabel: partner.categoryLabel,
+              url: partner.url,
+              libraries: partner.libraries,
+            }))
+
+          const payload = {
+            query: {
+              category: options.category,
+              categoryResolved: resolvedCategory,
+              library: options.library,
+            },
+            count: partners.length,
+            partners,
+          }
+
+          if (options.json) {
+            printJson(payload)
+            return
+          }
+
+          for (const partner of partners) {
+            console.log(
+              `${chalk.bold(partner.name)} [${partner.category}] - ${partner.description}\n${chalk.blue(partner.url)}`,
+            )
+          }
+        } catch (error) {
+          log.error(error instanceof Error ? error.message : String(error))
+          process.exit(1)
+        }
+      },
+    )
 
   // === PIN-VERSIONS SUBCOMMAND ===
   program

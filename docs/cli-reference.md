@@ -30,6 +30,7 @@ tanstack create [project-name] [options]
 | `-f, --force` | Overwrite existing directory |
 | `--list-add-ons` | List all available add-ons |
 | `--addon-details <id>` | Show details for specific add-on |
+| `--json` | Output machine-readable JSON for automation |
 | `--add-on-config <json>` | JSON string with add-on options |
 
 ```bash
@@ -39,6 +40,8 @@ tanstack create my-app --add-ons clerk,drizzle,tanstack-query
 tanstack create my-app --router-only --toolchain eslint --no-examples
 tanstack create my-app --template https://example.com/template.json
 tanstack create my-app --template ecommerce
+tanstack create --list-add-ons --framework React --json
+tanstack create --addon-details drizzle --framework React --json
 ```
 
 ---
@@ -111,19 +114,86 @@ tanstack template compile
 
 See [Templates](./templates.md) for full guide.
 
-## tanstack mcp
+## tanstack libraries
 
-Start MCP server for AI agents.
+List TanStack libraries with optional group filtering.
 
 ```bash
-tanstack mcp [options]
+tanstack libraries [options]
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--sse` | HTTP/SSE mode (default: stdio) |
+| `--group <group>` | Filter by group: `state`, `headlessUI`, `performance`, `tooling` |
+| `--json` | Output machine-readable JSON |
 
-See [MCP Server](./mcp/overview.md) for setup.
+```bash
+tanstack libraries
+tanstack libraries --group state --json
+```
+
+---
+
+## tanstack doc
+
+Fetch a TanStack documentation page by library and path.
+
+```bash
+tanstack doc <library> <path> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--docs-version <version>` | Docs version (default: `latest`) |
+| `--json` | Output machine-readable JSON |
+
+```bash
+tanstack doc router framework/react/guide/data-loading
+tanstack doc query framework/react/overview --docs-version v5 --json
+```
+
+---
+
+## tanstack search-docs
+
+Search TanStack documentation.
+
+```bash
+tanstack search-docs <query> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--library <id>` | Filter by library ID |
+| `--framework <name>` | Filter by framework |
+| `--limit <n>` | Max results (default `10`, max `50`) |
+| `--json` | Output machine-readable JSON |
+
+```bash
+tanstack search-docs "server functions" --library start
+tanstack search-docs loaders --library router --framework react --json
+```
+
+---
+
+## tanstack ecosystem
+
+List ecosystem partner recommendations.
+
+```bash
+tanstack ecosystem [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--category <category>` | Filter by category |
+| `--library <id>` | Filter by TanStack library |
+| `--json` | Output machine-readable JSON |
+
+```bash
+tanstack ecosystem --category database
+tanstack ecosystem --library router --json
+```
 
 ---
 

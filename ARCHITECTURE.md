@@ -13,7 +13,7 @@
 
 | Package | Purpose |
 |---------|---------|
-| `@tanstack/cli` | Main CLI with commands: `create`, `add`, `add-on`, `starter`, `mcp` |
+| `@tanstack/cli` | Main CLI with commands: `create`, `add`, `add-on`, `starter`, `libraries`, `doc`, `search-docs`, `ecosystem` |
 | `@tanstack/create` | Core engine, frameworks, and add-ons |
 
 ## Framework Structure

@@ -55,7 +55,10 @@ node ../cli/packages/cli/dist/index.js create my-app
 | `tanstack add [add-ons]`        | Add to existing project   |
 | `tanstack add-on init/compile`  | Create custom add-on      |
 | `tanstack template init/compile` | Create custom template    |
-| `tanstack mcp [--sse]`          | Start MCP server          |
+| `tanstack libraries`            | List TanStack libraries   |
+| `tanstack doc`                  | Fetch a docs page         |
+| `tanstack search-docs`          | Search TanStack docs      |
+| `tanstack ecosystem`            | List ecosystem partners   |
 | `tanstack pin-versions`         | Pin TanStack packages     |
 
 ## Create Options
@@ -96,17 +99,14 @@ npx serve .add-on -l 9080
 node packages/cli/dist/index.js create test --add-ons http://localhost:9080/info.json
 ```
 
-## MCP Server Config
+## Agent Introspection Commands
 
-```json
-{
-  "mcpServers": {
-    "tanstack": {
-      "command": "npx",
-      "args": ["@tanstack/cli", "mcp"]
-    }
-  }
-}
+```bash
+npx @tanstack/cli create --list-add-ons --json
+npx @tanstack/cli create --addon-details drizzle --json
+npx @tanstack/cli libraries --json
+npx @tanstack/cli search-docs "server functions" --library start --json
+npx @tanstack/cli ecosystem --category database --json
 ```
 
 ## Key Files

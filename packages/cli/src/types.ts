@@ -10,8 +10,7 @@ export interface CliOptions {
   addOns?: Array<string> | boolean
   listAddOns?: boolean
   addonDetails?: string
-  mcp?: boolean
-  mcpSse?: boolean
+  json?: boolean
   starter?: string
   templateId?: string
   targetDir?: string

@@ -31,7 +31,7 @@ npx @tanstack/cli create my-app
 - **TanStack Start** - Full-stack SSR framework (default)
 - **TanStack Router** - Type-safe routing (`--router-only` for SPA)
 - **Add-ons** - Auth, database, deployment, monitoring, and more
-- **MCP Server** - AI-assisted development
+- **CLI Introspection** - Agent-friendly discovery via JSON CLI output
 
 ## Quick Start
 
@@ -50,6 +50,11 @@ npx @tanstack/cli add clerk drizzle
 
 # List available add-ons
 npx @tanstack/cli create --list-add-ons
+
+# Agent-friendly introspection
+npx @tanstack/cli create --addon-details tanstack-query --json
+npx @tanstack/cli libraries --json
+npx @tanstack/cli search-docs "loaders" --library router --framework react --json
 ```
 
 ## Documentation
