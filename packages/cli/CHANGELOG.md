@@ -1,5 +1,11 @@
 # @tanstack/cli
 
+## 0.62.1
+
+### Patch Changes
+
+- Improve e2e test performance: parallelize tests via Nx caching and `nx affected`, block non-essential assets (images, fonts, media) during test runs, add per-fixture timing logs, make quality gates opt-in per fixture, and move template/router-only tests from `@blocking` to `@matrix`. ([`68489cc`](https://github.com/TanStack/cli/commit/68489cc6cb22c0c0de96b2da5e55f90bc9ba4a38))
+
 ## 0.62.0
 
 ### Minor Changes
