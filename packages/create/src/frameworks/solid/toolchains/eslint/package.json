@@ -5,7 +5,7 @@
     "check": "prettier --write . && eslint --fix"
   },
   "devDependencies": {
-    "@tanstack/eslint-config": "^0.3.2",
-    "prettier": "^3.5.3"
+    "@tanstack/eslint-config": "latest",
+    "prettier": "^3.8.1"
   }
 }

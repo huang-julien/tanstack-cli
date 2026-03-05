@@ -136,7 +136,7 @@ export function createPackageJSON(options: Options) {
       packageJSON.devDependencies = {
         ...(packageJSON.devDependencies ?? {}),
         '@tanstack/router-plugin':
-          packageJSON.devDependencies?.['@tanstack/router-plugin'] ?? '^1.132.0',
+          packageJSON.devDependencies?.['@tanstack/router-plugin'] ?? 'latest',
       }
     }
 
@@ -147,7 +147,7 @@ export function createPackageJSON(options: Options) {
       packageJSON.devDependencies = {
         ...(packageJSON.devDependencies ?? {}),
         '@tanstack/router-plugin':
-          packageJSON.devDependencies?.['@tanstack/router-plugin'] ?? '^1.133.20',
+          packageJSON.devDependencies?.['@tanstack/router-plugin'] ?? 'latest',
       }
     }
   }

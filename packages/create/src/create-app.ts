@@ -9,6 +9,7 @@ import {
   translateExecuteCommand,
 } from './package-manager.js'
 import { createPackageJSON } from './package-json.js'
+import { resolvePackageJSONLatest } from './npm-resolver.js'
 import { createTemplateFile } from './template-file.js'
 import { installShadcnComponents } from './integrations/shadcn.js'
 import { setupGit } from './integrations/git.js'
@@ -130,9 +131,10 @@ async function writeFiles(environment: Environment, options: Options) {
     type: 'file',
     message: 'Writing package.json...',
   })
+  const packageJSON = await resolvePackageJSONLatest(createPackageJSON(options))
   await environment.writeFile(
     resolve(options.targetDir, './package.json'),
-    JSON.stringify(createPackageJSON(options), null, 2),
+    JSON.stringify(packageJSON, null, 2),
   )
   environment.finishStep('write-package-json', 'Package.json written')
 
