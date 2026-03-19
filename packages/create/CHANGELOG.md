@@ -1,5 +1,11 @@
 # @tanstack/create
 
+## 0.63.1
+
+### Patch Changes
+
+- Fix the Neon add-on Vite plugin template to use the `postgres` export from `vite-plugin-neon-new` so newly scaffolded apps start without import errors and avoid deprecated plugin package warnings. ([`ddfaaaa`](https://github.com/TanStack/cli/commit/ddfaaaac81cdc60965052b82da1f1482155c560c))
+
 ## 0.63.0
 
 ### Minor Changes
